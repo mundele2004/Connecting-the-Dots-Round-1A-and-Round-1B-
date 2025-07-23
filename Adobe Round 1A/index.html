@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adobe Challenge Round 1A - PDF Outline Extractor</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+</head>
+<body>
+    <!-- Header Section -->
+    <header class="header">
+        <div class="container">
+            <h1 class="header__title">Adobe Challenge Round 1A</h1>
+            <p class="header__subtitle">PDF Outline Extractor</p>
+            <p class="header__description">Extract structured outlines from PDF documents (≤50 pages)</p>
+            
+            <!-- Constraints Display -->
+            <div class="constraints">
+                <h3 class="constraints__title">Challenge Constraints</h3>
+                <div class="constraints__grid">
+                    <div class="constraint-item">
+                        <span class="constraint-label">Max Pages:</span>
+                        <span class="constraint-value">≤ 50 pages</span>
+                    </div>
+                    <div class="constraint-item">
+                        <span class="constraint-label">Execution Time:</span>
+                        <span class="constraint-value">≤ 10 seconds</span>
+                    </div>
+                    <div class="constraint-item">
+                        <span class="constraint-label">Network:</span>
+                        <span class="constraint-value">Offline Only</span>
+                    </div>
+                    <div class="constraint-item">
+                        <span class="constraint-label">Runtime:</span>
+                        <span class="constraint-value">CPU Only</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="container">
+            <!-- Upload Section -->
+            <section class="upload-section card">
+                <div class="card__body">
+                    <h2>Upload PDF Document</h2>
+                    
+                    <!-- Validation Status -->
+                    <div class="validation-status" id="validationStatus" style="display: none;">
+                        <div class="validation-item">
+                            <span class="validation-label">File Type:</span>
+                            <span class="validation-result" id="fileTypeStatus">-</span>
+                        </div>
+                        <div class="validation-item">
+                            <span class="validation-label">Page Count:</span>
+                            <span class="validation-result" id="pageCountStatus">-</span>
+                        </div>
+                        <div class="validation-item">
+                            <span class="validation-label">File Size:</span>
+                            <span class="validation-result" id="fileSizeStatus">-</span>
+                        </div>
+                    </div>
+
+                    <div class="upload-area" id="uploadArea">
+                        <div class="upload-content">
+                            <div class="upload-icon">📄</div>
+                            <p class="upload-text">Drag and drop your PDF here</p>
+                            <p class="upload-subtext">or</p>
+                            <button class="btn btn--primary" id="browseBtn">Browse Files</button>
+                            <input type="file" id="fileInput" accept=".pdf" hidden>
+                        </div>
+                        <div class="upload-requirements">
+                            <p><strong>Requirements:</strong> PDF format, ≤50 pages, ≤10MB</p>
+                            <p><strong>Note:</strong> Files exceeding 50 pages will be rejected</p>
+                        </div>
+                    </div>
+                    
+                    <div class="file-info" id="fileInfo" style="display: none;">
+                        <div class="file-details">
+                            <span class="file-name" id="fileName"></span>
+                            <span class="file-stats" id="fileStats"></span>
+                        </div>
+                        <button class="btn btn--primary" id="extractBtn" disabled>Extract Outline</button>
+                    </div>
+                    
+                    <!-- Sample Data Button -->
+                    <div class="sample-section">
+                        <button class="btn btn--secondary" id="sampleBtn">Try with Sample Data</button>
+                        <p class="sample-text">Use pre-loaded sample PDF data for demonstration</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Processing Section -->
+            <section class="processing-section card" id="processingSection" style="display: none;">
+                <div class="card__body">
+                    <h3>Processing PDF...</h3>
+                    <div class="progress-container">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressFill"></div>
+                        </div>
+                        <div class="progress-text" id="progressText">0%</div>
+                    </div>
+                    
+                    <div class="processing-steps" id="processingSteps">
+                        <div class="processing-step" id="step1">
+                            <span class="step-indicator">⏳</span>
+                            <span class="step-text">Validating PDF structure...</span>
+                        </div>
+                        <div class="processing-step" id="step2">
+                            <span class="step-indicator">⏳</span>
+                            <span class="step-text">Extracting text and formatting...</span>
+                        </div>
+                        <div class="processing-step" id="step3">
+                            <span class="step-indicator">⏳</span>
+                            <span class="step-text">Analyzing headings...</span>
+                        </div>
+                        <div class="processing-step" id="step4">
+                            <span class="step-indicator">⏳</span>
+                            <span class="step-text">Generating outline...</span>
+                        </div>
+                    </div>
+                    
+                    <div class="processing-timer">
+                        <span>Processing time: </span>
+                        <span id="processingTime">0.0s</span>
+                        <button class="btn btn--outline btn--sm" id="cancelBtn" style="margin-left: 16px;">Cancel</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Results Section -->
+            <section class="results-section" id="resultsSection" style="display: none;">
+                <div class="results-header">
+                    <h2>Extraction Results</h2>
+                    <div class="results-actions">
+                        <button class="btn btn--secondary" id="copyBtn">Copy JSON</button>
+                        <button class="btn btn--primary" id="downloadBtn">Download JSON</button>
+                        <button class="btn btn--outline" id="resetBtn">Process Another</button>
+                    </div>
+                </div>
+
+                <div class="results-content">
+                    <!-- Left Panel: Document Metadata -->
+                    <div class="results-panel">
+                        <div class="card">
+                            <div class="card__body">
+                                <h3>Document Information</h3>
+                                <div class="document-title" id="documentTitle">
+                                    Loading...
+                                </div>
+                                
+                                <h4>Processing Metadata</h4>
+                                <div class="metadata">
+                                    <div class="metadata-item">
+                                        <span class="metadata-label">Filename:</span>
+                                        <span class="metadata-value" id="metaFilename">-</span>
+                                    </div>
+                                    <div class="metadata-item">
+                                        <span class="metadata-label">Total Pages:</span>
+                                        <span class="metadata-value" id="metaPages">-</span>
+                                    </div>
+                                    <div class="metadata-item">
+                                        <span class="metadata-label">Processing Time:</span>
+                                        <span class="metadata-value" id="metaTime">-</span>
+                                    </div>
+                                    <div class="metadata-item">
+                                        <span class="metadata-label">Headings Found:</span>
+                                        <span class="metadata-value" id="metaHeadings">-</span>
+                                    </div>
+                                    <div class="metadata-item">
+                                        <span class="metadata-label">Hierarchy Levels:</span>
+                                        <span class="metadata-value" id="metaLevels">-</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Panel: Hierarchical Outline -->
+                    <div class="results-panel">
+                        <div class="card">
+                            <div class="card__body">
+                                <h3>Document Outline</h3>
+                                <div class="outline-controls">
+                                    <button class="btn btn--outline btn--sm" id="expandAllBtn">Expand All</button>
+                                    <button class="btn btn--outline btn--sm" id="collapseAllBtn">Collapse All</button>
+                                </div>
+                                <div class="outline-container" id="outlineContainer">
+                                    <div class="outline-loading">Generating outline...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- JSON Output Viewer -->
+                <div class="json-viewer card">
+                    <div class="card__body">
+                        <div class="json-header">
+                            <h3>JSON Output</h3>
+                            <div class="json-controls">
+                                <button class="btn btn--outline btn--sm" id="formatJsonBtn">Format</button>
+                                <button class="btn btn--outline btn--sm" id="minifyJsonBtn">Minify</button>
+                            </div>
+                        </div>
+                        <pre id="jsonOutput"><code>Loading...</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Algorithm Explanation -->
+            <section class="algorithm-section card">
+                <div class="card__body">
+                    <h2>Algorithm Overview</h2>
+                    <button class="algorithm-toggle" id="algorithmToggle">
+                        Show Algorithm Details <span class="toggle-icon">▼</span>
+                    </button>
+                    <div class="algorithm-content" id="algorithmContent" style="display: none;">
+                        <div class="algorithm-steps">
+                            <div class="algorithm-step">
+                                <div class="step-number">1</div>
+                                <div class="step-content">
+                                    <h4>PDF Validation & Page Count Check</h4>
+                                    <p>Strict validation of PDF format and page count using PDF.js. Files exceeding 50 pages are immediately rejected with clear error messages.</p>
+                                </div>
+                            </div>
+                            <div class="algorithm-step">
+                                <div class="step-number">2</div>
+                                <div class="step-content">
+                                    <h4>Text Extraction with Formatting</h4>
+                                    <p>Extract text content while preserving formatting information including font sizes, styles, positioning, and text attributes for heading detection.</p>
+                                </div>
+                            </div>
+                            <div class="algorithm-step">
+                                <div class="step-number">3</div>
+                                <div class="step-content">
+                                    <h4>Statistical Font Analysis</h4>
+                                    <p>Analyze font size distribution to establish dynamic thresholds. Calculate mean, standard deviation, and percentiles for heading classification.</p>
+                                </div>
+                            </div>
+                            <div class="algorithm-step">
+                                <div class="step-number">4</div>
+                                <div class="step-content">
+                                    <h4>Multi-Factor Heading Detection</h4>
+                                    <p>Use combined scoring based on font size, bold formatting, position analysis, text length patterns, and numbering schemes to identify headings.</p>
+                                </div>
+                            </div>
+                            <div class="algorithm-step">
+                                <div class="step-number">5</div>
+                                <div class="step-content">
+                                    <h4>Hierarchical Structure Building</h4>
+                                    <p>Classify detected headings into H1, H2, H3 levels using statistical thresholds and generate structured JSON outline with page mappings.</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="constraint-compliance">
+                            <h4>Constraint Compliance</h4>
+                            <div class="compliance-grid">
+                                <div class="compliance-item">
+                                    <span class="compliance-check">✅</span>
+                                    <span>≤50 pages validation</span>
+                                </div>
+                                <div class="compliance-item">
+                                    <span class="compliance-check">✅</span>
+                                    <span>≤10 second processing</span>
+                                </div>
+                                <div class="compliance-item">
+                                    <span class="compliance-check">✅</span>
+                                    <span>Offline processing</span>
+                                </div>
+                                <div class="compliance-item">
+                                    <span class="compliance-check">✅</span>
+                                    <span>CPU-only execution</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script>
+        // Configure PDF.js worker
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    </script>
+    <script src="app.js"></script>
+</body>
+</html>
